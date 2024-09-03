@@ -118,20 +118,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy Docker image to EC2
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-        run: |
-          IMAGE_TAG=${{ github.sha }}
-          SSH_KEY=$(echo "$SSH_PRIVATE_KEY" | tr -d '\r')
-          echo "$SSH_KEY" > /tmp/id_rsa
-          chmod 600 /tmp/id_rsa
-          ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa ec2-user@ec2-35-174-173-234.compute-1.amazonaws.com << 'EOF'
-            docker pull ${{ secrets.DOCKER_USERNAME }}/test-jira:${IMAGE_TAG}
-            docker stop testjira || true
-            docker rm testjira || true
-            docker run -d --name testjira -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/test-jira:${IMAGE_TAG}
-          EOF
+      # - name: Deploy Docker image to EC2
+      #   env:
+      #     SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+      #   run: |
+      #     IMAGE_TAG=${{ github.sha }}
+      #     SSH_KEY=$(echo "$SSH_PRIVATE_KEY" | tr -d '\r')
+      #     echo "$SSH_KEY" > /tmp/id_rsa
+      #     chmod 600 /tmp/id_rsa
+      #     ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa ec2-user@ec2-35-174-173-234.compute-1.amazonaws.com << 'EOF'
+      #       docker pull ${{ secrets.DOCKER_USERNAME }}/test-jira:${IMAGE_TAG}
+      #       docker stop testjira || true
+      #       docker rm testjira || true
+      #       docker run -d --name testjira -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/test-jira:${IMAGE_TAG}
+      #     EOF
 
       - name: Notify JIRA
         env:
