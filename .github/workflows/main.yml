@@ -178,30 +178,40 @@ jobs:
           # Your deployment commands here
           echo "Deploying code..."
         
-      - name: Create Jira issue
-        env:
-          JIRA_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+      - name: Create Jira Issue
         run: |
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} | base64)" \
-            --http1.1 \
-            -d '{
+            curl --request POST \
+              --url 'https://{{ secrets.JIRA_URL }}/rest/api/3/issue' \
+              --user '${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}' \
+              --header 'Accept: application/json' \
+              --header 'Content-Type: application/json' \
+              --data '{
               "fields": {
                 "project": {
-                  "key": "'"${{ secrets.JIRA_PROJECT_KEY }}"'
+                  "key": "'"${{ secrets.JIRA_PROJECT_KEY }}"'"
                 },
                 "summary": "Deployment Completed",
-                "description": "Code has been successfully deployed.",
+                "description": {
+                  "type": "doc",
+                  "version": 1,
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "text": "Code has been successfully deployed.",
+                          "type": "text"
+                        }
+                      ]
+                    }
+                  ]
+                },
                 "issuetype": {
                   "name": "Task"
                 }
               }
-            }' \
-            ${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/
+            }'
+        
 
 
 
