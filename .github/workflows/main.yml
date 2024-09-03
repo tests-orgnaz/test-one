@@ -1,31 +1,75 @@
-name: Node.js CI
+name: Docker Build, Push, and Deploy
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches: [ main ]
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: us-east-1  # Replace with your AWS region
+  EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+  JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+  JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+  JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
 jobs:
-  build:
-
+  build-push-deploy:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [14.x, 16.x, 18.x]
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - name: Check out code
+      uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
       with:
-        node-version: ${{ matrix.node-version }}
+        username: ${{ env.DOCKER_USERNAME }}
+        password: ${{ env.DOCKER_PASSWORD }}
 
-    - name: Install dependencies
-      run: npm install
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}
 
-    - name: Run tests
-      run: npm test
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Deploy to EC2
+      run: |
+        # Get the public IP address of the EC2 instance
+        EC2_PUBLIC_IP=$(aws ec2 describe-instances --instance-ids ${{ env.EC2_INSTANCE_ID }} --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+        
+        # Use AWS Systems Manager to run commands on the EC2 instance
+        aws ssm send-command \
+          --instance-ids ${{ env.EC2_INSTANCE_ID }} \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands=[
+            "docker pull ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}",
+            "docker stop jiratest || true",
+            "docker rm jirstest || true",
+            "docker run -d --name jiratest ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}"
+          ] \
+          --output text
+
+    - name: Create Jira issue
+      uses: atlassian/gajira-create@v3
+      with:
+        project: TG
+        issuetype: Task
+        summary: New deployment - ${{ github.sha }}
+        description: |
+          A new version of the application has been deployed.
+          Commit: ${{ github.sha }}
+          Dockerhub Image: ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}
+          EC2 Instance ID: ${{ env.EC2_INSTANCE_ID }}
