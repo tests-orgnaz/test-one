@@ -201,7 +201,7 @@ jobs:
                 }
               }
             }' \
-            ${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/
+            ${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/
 
 
 
