@@ -151,7 +151,7 @@ jobs:
                 "summary": "Docker Image Deployed",
                 "description": "Docker image '${{ secrets.DOCKER_USERNAME }}/test-jira:${{ github.sha }}' has been successfully deployed to EC2.",
                 "issuetype": {
-                  "name": "Task"
+                  "name": "Email Request"
                 }
               }
             }' \
