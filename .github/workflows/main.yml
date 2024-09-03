@@ -1,161 +1,206 @@
-# name: Docker Build, Push, and Deploy
+# # name: Docker Build, Push, and Deploy
+
+# # on:
+# #   push:
+# #     branches: [ main ]
+
+# # env:
+# #   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+# #   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+# #   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+# #   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+# #   AWS_REGION: us-east-1  # Replace with your AWS region
+# #   EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+# #   JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+# #   JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+# #   JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+# # jobs:
+# #   build-push-deploy:
+# #     runs-on: ubuntu-latest
+# #     steps:
+# #     - name: Check out code
+# #       uses: actions/checkout@v2
+
+# #     - name: Set up Docker Buildx
+# #       uses: docker/setup-buildx-action@v1
+
+# #     - name: Login to DockerHub
+# #       uses: docker/login-action@v1
+# #       with:
+# #         username: ${{ env.DOCKER_USERNAME }}
+# #         password: ${{ env.DOCKER_PASSWORD }}
+
+# #     - name: Build and push Docker image
+# #       uses: docker/build-push-action@v2
+# #       with:
+# #         context: .
+# #         push: true
+# #         tags: ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}
+
+# #     - name: Configure AWS credentials
+# #       uses: aws-actions/configure-aws-credentials@v1
+# #       with:
+# #         aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+# #         aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+# #         aws-region: ${{ env.AWS_REGION }}
+
+# #     - name: Deploy to EC2
+# #       run: |
+# #         # Get the public IP address of the EC2 instance
+# #         EC2_PUBLIC_IP=$(aws ec2 describe-instances --instance-ids ${{ env.EC2_INSTANCE_ID }} --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+        
+# #         # Use AWS Systems Manager to run commands on the EC2 instance
+# #         aws ssm send-command \
+# #           --instance-ids ${{ env.EC2_INSTANCE_ID }} \
+# #           --document-name "AWS-RunShellScript" \
+# #           --parameters commands=["docker pull ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}","docker stop jiratest || true","docker rm jirstest || true","docker run -d --name jiratest ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}"] \
+# #           --output text
+
+# #     - name: Create Jira issue
+# #       uses: atlassian/gajira-create@v3
+# #       with:
+# #         project: TG
+# #         issuetype: Task
+# #         summary: New deployment - ${{ github.sha }}
+# #         description: |
+# #           A new version of the application has been deployed.
+# #           Commit: ${{ github.sha }}
+# #           Dockerhub Image: ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}
+# #           EC2 Instance ID: ${{ env.EC2_INSTANCE_ID }}
+
+
+# name: JIRA TEST
 
 # on:
 #   push:
-#     branches: [ main ]
+#     branches:
+#       - main
 
 # env:
-#   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-#   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-#   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#   AWS_REGION: us-east-1  # Replace with your AWS region
-#   EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
-#   JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-#   JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-#   JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+#   AWS_REGION: us-east-1
 
 # jobs:
-#   build-push-deploy:
+#   build-and-push:
 #     runs-on: ubuntu-latest
 #     steps:
-#     - name: Check out code
-#       uses: actions/checkout@v2
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-#     - name: Set up Docker Buildx
-#       uses: docker/setup-buildx-action@v1
+#       - name: Login to Docker Hub
+#         uses: docker/login-action@v2
+#         with:
+#           username: ${{ secrets.DOCKER_USERNAME }}
+#           password: ${{ secrets.DOCKER_PASSWORD }}
 
-#     - name: Login to DockerHub
-#       uses: docker/login-action@v1
-#       with:
-#         username: ${{ env.DOCKER_USERNAME }}
-#         password: ${{ env.DOCKER_PASSWORD }}
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v2
 
-#     - name: Build and push Docker image
-#       uses: docker/build-push-action@v2
-#       with:
-#         context: .
-#         push: true
-#         tags: ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}
+#       - name: Build Docker image
+#         run: |
+#           IMAGE_TAG=${{ github.sha }}
+#           docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/test-jira:$IMAGE_TAG .
 
-#     - name: Configure AWS credentials
-#       uses: aws-actions/configure-aws-credentials@v1
-#       with:
-#         aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-#         aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-#         aws-region: ${{ env.AWS_REGION }}
+#       - name: Push Docker image
+#         run: docker push ${{ secrets.DOCKER_USERNAME }}/test-jira:${{ github.sha }}
 
-#     - name: Deploy to EC2
-#       run: |
-#         # Get the public IP address of the EC2 instance
-#         EC2_PUBLIC_IP=$(aws ec2 describe-instances --instance-ids ${{ env.EC2_INSTANCE_ID }} --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
-        
-#         # Use AWS Systems Manager to run commands on the EC2 instance
-#         aws ssm send-command \
-#           --instance-ids ${{ env.EC2_INSTANCE_ID }} \
-#           --document-name "AWS-RunShellScript" \
-#           --parameters commands=["docker pull ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}","docker stop jiratest || true","docker rm jirstest || true","docker run -d --name jiratest ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}"] \
-#           --output text
+#   deploy:
+#     needs: build-and-push
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-#     - name: Create Jira issue
-#       uses: atlassian/gajira-create@v3
-#       with:
-#         project: TG
-#         issuetype: Task
-#         summary: New deployment - ${{ github.sha }}
-#         description: |
-#           A new version of the application has been deployed.
-#           Commit: ${{ github.sha }}
-#           Dockerhub Image: ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}
-#           EC2 Instance ID: ${{ env.EC2_INSTANCE_ID }}
+#       - name: Set up AWS CLI
+#         uses: aws-actions/configure-aws-credentials@v2
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ env.AWS_REGION }}
 
+#       # - name: Deploy Docker image to EC2
+#       #   env:
+#       #     SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#       #   run: |
+#       #     IMAGE_TAG=${{ github.sha }}
+#       #     SSH_KEY=$(echo "$SSH_PRIVATE_KEY" | tr -d '\r')
+#       #     echo "$SSH_KEY" > /tmp/id_rsa
+#       #     chmod 600 /tmp/id_rsa
+#       #     ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa ec2-user@ec2-35-174-173-234.compute-1.amazonaws.com << 'EOF'
+#       #       docker pull ${{ secrets.DOCKER_USERNAME }}/test-jira:${IMAGE_TAG}
+#       #       docker stop testjira || true
+#       #       docker rm testjira || true
+#       #       docker run -d --name testjira -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/test-jira:${IMAGE_TAG}
+#       #     EOF
 
-name: JIRA TEST
+#       - name: Notify JIRA
+#         env:
+#           JIRA_URL: ${{ secrets.JIRA_BASE_URL }}
+#           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+#           JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+#         run: |
+#           curl -X POST \
+#             -H "Content-Type: application/json" \
+#             -H "Authorization: Basic $(echo -n ${JIRA_API_TOKEN}: | base64)" \
+#             --http1.1 \
+#             -d '{
+#               "fields": {
+#                 "project": {
+#                   "key": "'"${JIRA_PROJECT_KEY}"'"
+#                 },
+#                 "summary": "Docker Image Deployed",
+#                 "description": "Docker image '${{ secrets.DOCKER_USERNAME }}/test-jira:${{ github.sha }}' has been successfully deployed to EC2.",
+#                 "issuetype": {
+#                   "name": "Email Request"
+#                 }
+#               }
+#             }' \
+#             ${JIRA_URL}/rest/api/2/issue/
+
+name: Deploy and Create Jira Issue
 
 on:
   push:
     branches:
       - main
-
-env:
-  AWS_REGION: us-east-1
+  deployment:
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build Docker image
-        run: |
-          IMAGE_TAG=${{ github.sha }}
-          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/test-jira:$IMAGE_TAG .
-
-      - name: Push Docker image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/test-jira:${{ github.sha }}
-
   deploy:
-    needs: build-and-push
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      # - name: Deploy Docker image to EC2
-      #   env:
-      #     SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-      #   run: |
-      #     IMAGE_TAG=${{ github.sha }}
-      #     SSH_KEY=$(echo "$SSH_PRIVATE_KEY" | tr -d '\r')
-      #     echo "$SSH_KEY" > /tmp/id_rsa
-      #     chmod 600 /tmp/id_rsa
-      #     ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa ec2-user@ec2-35-174-173-234.compute-1.amazonaws.com << 'EOF'
-      #       docker pull ${{ secrets.DOCKER_USERNAME }}/test-jira:${IMAGE_TAG}
-      #       docker stop testjira || true
-      #       docker rm testjira || true
-      #       docker run -d --name testjira -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/test-jira:${IMAGE_TAG}
-      #     EOF
-
-      - name: Notify JIRA
+      - name: Deploy code
+        run: |
+          # Your deployment commands here
+          echo "Deploying code..."
+        
+      - name: Create Jira issue
         env:
           JIRA_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
         run: |
           curl -X POST \
             -H "Content-Type: application/json" \
-            -H "Authorization: Basic $(echo -n ${JIRA_API_TOKEN}: | base64)" \
-            --http1.1 \
+            -H "Authorization: Basic $(echo -n ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} | base64)" \
             -d '{
               "fields": {
                 "project": {
-                  "key": "'"${JIRA_PROJECT_KEY}"'"
+                  "key": "'"${{ secrets.JIRA_PROJECT_KEY }}"'
                 },
-                "summary": "Docker Image Deployed",
-                "description": "Docker image '${{ secrets.DOCKER_USERNAME }}/test-jira:${{ github.sha }}' has been successfully deployed to EC2.",
+                "summary": "Deployment Completed",
+                "description": "Code has been successfully deployed.",
                 "issuetype": {
-                  "name": "Email Request"
+                  "name": "Task"
                 }
               }
             }' \
-            ${JIRA_URL}/rest/api/2/issue/
+            ${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/
 
 
 
