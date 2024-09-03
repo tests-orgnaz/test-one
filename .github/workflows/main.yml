@@ -126,7 +126,7 @@ jobs:
           SSH_KEY=$(echo "$SSH_PRIVATE_KEY" | tr -d '\r')
           echo "$SSH_KEY" > /tmp/id_rsa
           chmod 600 /tmp/id_rsa
-          ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa ec2-user@your-ec2-instance.amazonaws.com << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i /tmp/id_rsa ec2-user@ec2-35-174-173-234.compute-1.amazonaws.com << 'EOF'
             docker pull ${{ secrets.DOCKER_USERNAME }}/test-jira:${IMAGE_TAG}
             docker stop testjira || true
             docker rm testjira || true
