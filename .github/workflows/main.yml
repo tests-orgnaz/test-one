@@ -54,12 +54,7 @@ jobs:
         aws ssm send-command \
           --instance-ids ${{ env.EC2_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
-          --parameters commands=[
-            "docker pull ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}",
-            "docker stop jiratest || true",
-            "docker rm jirstest || true",
-            "docker run -d --name jiratest ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}"
-          ] \
+          --parameters commands=["docker pull ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}","docker stop jiratest || true","docker rm jirstest || true","docker run -d --name jiratest ${{ env.DOCKER_USERNAME }}/test-jira:${{ github.sha }}"] \
           --output text
 
     - name: Create Jira issue
