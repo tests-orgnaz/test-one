@@ -162,7 +162,7 @@ name: Deploy and Create Jira Issue
 on:
   push:
     branches:
-      - main
+      - JS-2-Demo-Project-Release
   deployment:
 
 jobs:
@@ -214,7 +214,8 @@ jobs:
                   "name": "Task"
                 }
               }
-            }'
+            }'\
+            ${JIRA_URL}/rest/api/3/issue/
         
 
 
