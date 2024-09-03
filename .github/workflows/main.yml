@@ -148,7 +148,7 @@ jobs:
                   "key": "'"${JIRA_PROJECT_KEY}"'"
                 },
                 "summary": "Docker Image Deployed",
-                "description": "Docker image '${{ secrets.DOCKER_USERNAME }}/node-api-stage:${{ github.sha }}' has been successfully deployed to EC2.",
+                "description": "Docker image '${{ secrets.DOCKER_USERNAME }}/test-jira:${{ github.sha }}' has been successfully deployed to EC2.",
                 "issuetype": {
                   "name": "Task"
                 }
