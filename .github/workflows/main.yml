@@ -2,8 +2,7 @@ name: CI and CD Workflow
 
 on:
   push:
-    branches:
-      - JD-1-PROJECT-999
+    branches: [JD-1-PROJECT-999]
   workflow_dispatch:
 
 jobs:
