@@ -2,13 +2,14 @@ name: CI and CD Workflow
 
 on:
   push:
-    branches: [JD-1-PROJECT-999]
-  workflow_dispatch:
+    branches:
+      - JD-1-PROJECT-999
+  workflow_dispatch:  # This allows manual triggering of the workflow
 
 jobs:
   ci:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push'  # This job runs only on push events
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -19,9 +20,9 @@ jobs:
           echo "CI job completed."
 
   cd:
-    name: CD - manial deployment
+    name: CD - Manual Deployment
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'  # This job runs only on manual trigger
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -31,7 +32,7 @@ jobs:
           echo "Deployment initiated by the CEO"
           # Add your deployment steps here
         env:
-          MY_SECRET: ${{ secrets.SECRET_NAME_1 }}
+          MY_SECRET: ${{ secrets.SECRET_NAME_1 }}  # Replace with your actual secret names
           SECRET: ${{ secrets.SECRET }}
           MY_SECRET_2: ${{ secrets.MY_SECRET_2 }}
           MY_SECRET_1: ${{ secrets.MY_SECRET_1 }}
