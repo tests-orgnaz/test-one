@@ -1,10 +1,12 @@
+# .github/workflows/ci-cd-workflow.yml
+
 name: CI and CD Workflow
 
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:  # This allows manual triggering of the workflow
+      - JD-1-PROJECT-999
+  workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
   ci:
@@ -18,6 +20,7 @@ jobs:
           echo "Running CI tasks..."
           # Add your CI tasks here (e.g., tests, builds)
           echo "CI job completed."
+
   cd:
     name: CD - Manual Deployment
     runs-on: ubuntu-latest
