@@ -1,0 +1,25 @@
+# .github/workflows/trigger-workflow.yml
+
+name: Trigger CI/CD Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'JD-1-PROJECT-999'  # Default branch to deploy
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Trigger CI/CD Workflow
+        uses: peter-evans/workflow-dispatch@v1
+        with:
+          repository: ${{ github.repository }}
+          workflow: 'ci-cd-workflow.yml'  # Name of your main workflow file
+          ref: ${{ github.event.inputs.branch }}  # Use the branch provided in the input
